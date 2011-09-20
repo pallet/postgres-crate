@@ -1,11 +1,13 @@
 # Release notes
 
+## postgres-0.6.1
+
 - Add an option to postgresql-script to specify the database name
 
 - Uses subprocess in postgresql-script to avoid working directory changes
 
 - Fix warning from postgresql-script, and add a title
-  Remove the 'could not change directory' warning, and add a title argument 
+  Remove the 'could not change directory' warning, and add a title argument
   to allow identification of scripts in the log
 
 - Add a :share key to postgres settings
@@ -62,7 +64,7 @@
 
 - Update for 0.5.0-SNAPSHOT
   Change pallet.resource.* to pallet.action.*. Change stevedore calls to
-  script functions to use unquote and the pallet.script.lib namespace. 
+  script functions to use unquote and the pallet.script.lib namespace.
   Change request to session.  Change build-resources to build-actions.
 
 
