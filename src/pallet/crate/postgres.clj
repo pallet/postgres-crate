@@ -537,7 +537,7 @@
                   settings-map)
         old-settings (parameter/get-target-settings
                       session :postgresql instance nil)]
-    (logging/infof "Postgresql Settings %s" settings)
+    (logging/debugf "Postgresql Settings %s" settings)
     (->
      session
      (parameter/assoc-target-settings
@@ -555,9 +555,9 @@
         packages (:packages settings)
         package-source (:package-source settings)
         version (:version settings)]
-    (logging/info
-     (format "postgresql %s from %s packages [%s]"
-             version (name package-source) (string/join ", " packages)))
+    (logging/debugf
+     "postgresql %s from %s packages [%s]"
+     version (name package-source) (string/join ", " packages))
     (->
      session
      (when-> (= package-source :martin-pitt-backports)
