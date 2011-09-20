@@ -3,20 +3,23 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>org.cloudhoist</groupId>
-    <artifactId>pallet-crates</artifactId>
-    <version>0.5.0</version>
-    <relativePath>..</relativePath>
+    <artifactId>pallet-crate-pom</artifactId>
+    <version>0.6.0</version>
   </parent>
   <artifactId>postgres</artifactId>
-  <version>0.6.0</version>
+  <version>0.6.2-SNAPSHOT</version>
 
   <scm>
-    <connection>scm:git:git://github.com/pallet/pallet-crates.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com/pallet/pallet-crates.git</developerConnection>
-    <url>https://github.com/pallet/pallet-crates</url>
+    <connection>scm:git:git://github.com/pallet/postgres-crate.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/pallet/postgres-crate.git</developerConnection>
+    <url>https://github.com/pallet/postgres-crate</url>
   </scm>
 
   <dependencies>
+    <dependency>
+      <groupId>org.cloudhoist</groupId>
+      <artifactId>etc-default</artifactId>
+    </dependency>
     <dependency>
       <groupId>org.cloudhoist</groupId>
       <artifactId>automated-admin-user</artifactId>
