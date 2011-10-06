@@ -119,7 +119,7 @@
      :else :native)))
 
 (def pgdg-repo-versions
-  {"9.0" "9.0-2"})
+  {"9.0" "9.0-5"})
 
 (defmulti default-settings
   "Determine the default settings for the specified "
@@ -220,6 +220,15 @@
 (defmethod default-settings [:debian :martin-pitt-backports]
   [session os-family package-source settings]
   (default-settings session :debian :debian-backports settings))
+
+(defn pgdg-url
+  [version os-family]
+  (format
+   "http://yum.pgrpms.org/reporpms/%s/pgdg-%s%s-%s.noarch.rpm"
+   version
+   (name os-family)
+   (string/replace version "." "")
+   (pgdg-repo-versions version)))
 
 ;;; pg_hba.conf
 
@@ -577,11 +586,7 @@
       (= package-source :pgdg)
       (action/with-precedence {:action-id ::add-pgdg-rpm
                                :always-before `package/package}
-        (package/add-rpm
-         "pgdg.rpm"
-         :url (format
-               "http://yum.pgrpms.org/reporpms/%s/pgdg-%s-%s.noarch.rpm"
-               version (name os-family) (pgdg-repo-versions version))))
+        (package/add-rpm "pgdg.rpm" :url (pgdg-url version os-family)))
       (action/with-precedence {:action-id ::pgdg-update
                                :always-before `package/package
                                :always-after ::add-pgdg-rpm}
