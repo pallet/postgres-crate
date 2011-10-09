@@ -27,4 +27,12 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <!-- make sure we can find the parent pom -->
+  <repositories>
+    <repository>
+      <id>sonatype</id>
+      <url>http://oss.sonatype.org/content/repositories/releases</url>
+    </repository>
+  </repositories>
 </project>
