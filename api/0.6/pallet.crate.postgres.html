@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html><head><link href="css/default.css" rel="stylesheet" type="text/css"><script src="js/jquery.min.js" type="text/javascript"></script><script src="js/page_effects.js" type="text/javascript"></script><title>pallet.crate.postgres documentation</title></head><body><div id="header"><h1><a href="index.html">Postgres 0.6 API documentation</a></h1></div><div class="sidebar" id="namespaces"><h3>Namespaces</h3><ul><li class="current"><a href="pallet.crate.postgres.html">pallet.crate.postgres</a></li></ul></div><div class="sidebar" id="vars"><h3>Public Vars</h3><ul><li><a href="pallet.crate.postgres.html#var-check-settings">check-settings</a></li><li><a href="pallet.crate.postgres.html#var-cluster-settings">cluster-settings</a></li><li><a href="pallet.crate.postgres.html#var-cluster-settings-with-defaults">cluster-settings-with-defaults</a></li><li><a href="pallet.crate.postgres.html#var-conf-file">conf-file</a></li><li><a href="pallet.crate.postgres.html#var-controldata">controldata</a></li><li><a href="pallet.crate.postgres.html#var-create-database">create-database</a></li><li><a href="pallet.crate.postgres.html#var-create-role">create-role</a></li><li><a href="pallet.crate.postgres.html#var-database-data-directory">database-data-directory</a></li><li><a href="pallet.crate.postgres.html#var-default-cluster-name">default-cluster-name</a></li><li><a href="pallet.crate.postgres.html#var-default-settings">default-settings</a></li><li><a href="pallet.crate.postgres.html#var-hba-conf">hba-conf</a></li><li><a href="pallet.crate.postgres.html#var-hot-standby-master">hot-standby-master</a></li><li><a href="pallet.crate.postgres.html#var-hot-standby-replica">hot-standby-replica</a></li><li><a href="pallet.crate.postgres.html#var-initdb">initdb</a></li><li><a href="pallet.crate.postgres.html#var-install-service">install-service</a></li><li><a href="pallet.crate.postgres.html#var-log-settings">log-settings</a></li><li><a href="pallet.crate.postgres.html#var-merge-settings">merge-settings</a></li><li><a href="pallet.crate.postgres.html#var-package-source">package-source</a></li><li><a href="pallet.crate.postgres.html#var-postgres">postgres</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-conf">postgresql-conf</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-config-changed-flag">postgresql-config-changed-flag</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-script">postgresql-script</a></li><li><a href="pallet.crate.postgres.html#var-recovery-conf">recovery-conf</a></li><li><a href="pallet.crate.postgres.html#var-service">service</a></li><li><a href="pallet.crate.postgres.html#var-service-config">service-config</a></li><li><a href="pallet.crate.postgres.html#var-settings">settings</a></li><li><a href="pallet.crate.postgres.html#var-settings-for-cluster">settings-for-cluster</a></li><li><a href="pallet.crate.postgres.html#var-settings-map">settings-map</a></li><li><a href="pallet.crate.postgres.html#var-start-conf">start-conf</a></li></ul></div><div class="namespace-docs" id="content"><h2>pallet.crate.postgres documentation</h2><pre class="doc">Install and configure PostgreSQL.
+
+# Settings
+
+Settings are constructed with the settings-map function.
+
+The settings map has a :permissions, :options, and :recovery keys
+used to specify the default database hba.conf, postgresal.conf and
+recovery.conf files. Paths in the default options should contain a
+&quot;%s&quot; for the database cluster name (n.b. a cluster is a group
+of databases running under the same postmaster process).
+
+The settings-map should be passed to the `settings` crate function
+which fills out the target specific paths, etc. Paths passed to `settings`
+should contain a &quot;%s&quot; to receive the database name.
+
+For each database cluster, `database-settings` must be called to set up the
+database specific settings from the default settings passed to the `settings`
+function.  Database specific settings may be set up by passing a settings map
+to the `database-settings` function. Paths passed to database-settings should
+be complete amd not contain &quot;%s&quot; placeholders.
+
+## Settings map details
+
+These keys can also appear under the :dbs key for database cluster specific
+settings, in which case the paths should be plain strings.
+
+For example:
+
+    {:options {:port 5432
+               :data_directory &quot;/var/lib/pgsql/%s&quot;}
+     :clusters {:db1
+            {:options {:port :5433
+                       :data_directory &quot;/var/lib/pgsql/db1&quot;}}}}
+
+Links:
+-  http://blog.2ndquadrant.com/en/2010/05/install-multiple-postgresql-servers-redhat-linux.html
+</pre><div class="public" id="var-check-settings"><h3>check-settings</h3><div class="usage"><code>(check-settings session settings cluster-settings cluster &amp; keys)</code></div><pre class="doc">Check that settings are valid
+</pre></div><div class="public" id="var-cluster-settings"><h3>cluster-settings</h3><div class="usage"><code>(cluster-settings session cluster-name settings-map &amp; {:keys [instance variant]})</code></div><pre class="doc">Add cluster specific postgresql settings map to the session map.
+This crate function must be called (usually in the :settings phase)
+for each database cluster you want to manage. Must be called after
+`settings`.
+
+Options:
+- instance     Specify the postgres instance to use for the cluster
+- variant      Specify a variant for the cluster. Current options are
+               :hot-standby-master and :hot-standby-replica
+
+For variant :hot-standby-replica, you will need to pass :primary_conninfo
+in the `settings-map`</pre></div><div class="public" id="var-cluster-settings-with-defaults"><h3>cluster-settings-with-defaults</h3><div class="usage"><code>(cluster-settings-with-defaults cluster settings-map defaults)</code></div><pre class="doc">Combines a cluster specific settings map with the default settings
+</pre></div><div class="public" id="var-conf-file"><h3>conf-file</h3><div class="usage"><code>(conf-file session file-keys values-kw formatter &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a postgresql configuration file
+</pre></div><div class="public" id="var-controldata"><h3>controldata</h3><div class="usage"><code>(controldata session &amp; {:keys [as-user instance cluster], :as options})</code></div><pre class="doc">Execute pg_controldata.
+</pre></div><div class="public" id="var-create-database"><h3>create-database</h3><div class="usage"><code>(create-database session db-name &amp; rest)</code></div><pre class="doc">Create a database if it does not exist.
+
+You can specify database parameters by including a keyed parameter called
+:db-parameters, which indicates a vector of strings or keywords that will get
+translated in order to the options to the create database command. Passes on
+key/value arguments it does not understand to postgresql-script.
+
+Example: (create-database
+           &quot;my-database&quot; :db-parameters [:encoding &quot;'LATIN1'&quot;])</pre></div><div class="public" id="var-create-role"><h3>create-role</h3><div class="usage"><code>(create-role session username &amp; rest)</code></div><pre class="doc">Create a postgres role if it does not exist.
+
+You can specify user parameters by including a keyed parameter called
+:user-parameters, which indicates a vector of strings or keywords that will
+get translated in order to the options to the create user command. Passes on
+key/value arguments to postgresql-script.
+
+Example (create-role
+          &quot;myuser&quot; :user-parameters [:encrypted :password &quot;'mypasswd'&quot;])</pre></div><div class="public" id="var-database-data-directory"><h3>database-data-directory</h3><div class="usage"><code>(database-data-directory settings cluster)</code></div><pre class="doc">Given a settings map and a database name, return the data directory
+for the database.</pre></div><div class="public" id="var-default-cluster-name"><h3>default-cluster-name</h3><div class="usage"><code>(default-cluster-name session &amp; {:keys [instance]})</code></div><pre class="doc">Returns the default cluster name
+</pre></div><div class="public" id="var-default-settings"><h3>default-settings</h3><div class="usage"></div><pre class="doc">Determine the default settings for the specified 
+</pre></div><div class="public" id="var-hba-conf"><h3>hba-conf</h3><div class="usage"><code>(hba-conf session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a pg_hba.conf file from the arguments. Each record is either a
+vector or map of keywords/args.
+
+Note that pg_hba.conf is case-sensitive: all means all databases, ALL is a
+database named ALL.
+
+Also note that if you intend to execute subsequent commands, you'd do best to
+include entries in here that allow the admin user you are using easy access
+to the database. For example, allow the postgres user to have ident access
+over local.
+
+Options:
+:cluster        The database cluster to use
+:instance  The postgres instance to use</pre></div><div class="public" id="var-hot-standby-master"><h3>hot-standby-master</h3><div class="usage"><code>(hot-standby-master settings)</code></div><pre class="doc">Set up hot standby master defaults
+</pre></div><div class="public" id="var-hot-standby-replica"><h3>hot-standby-replica</h3><div class="usage"><code>(hot-standby-replica settings)</code></div><pre class="doc">Set up hot standby replica defaults
+</pre></div><div class="public" id="var-initdb"><h3>initdb</h3><div class="usage"><code>(initdb session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Initialise a cluster
+</pre></div><div class="public" id="var-install-service"><h3>install-service</h3><div class="usage"><code>(install-service session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a start.conf file from the arguments. This is specific to
+non-debian distributions. See `service-config`, which works across
+distributions.
+
+Options:
+:cluster        The database cluster to use
+:instance  The postgres instance to use</pre></div><div class="public" id="var-log-settings"><h3>log-settings</h3><div class="usage"><code>(log-settings session &amp; {:keys [instance level], :or {level :info}})</code></div><pre class="doc">Log postgresql settings
+</pre></div><div class="public" id="var-merge-settings"><h3>merge-settings</h3><div class="usage"><code>(merge-settings &amp; settings)</code></div><pre class="doc">Merge postgresql settings maps
+</pre></div><div class="public" id="var-package-source"><h3>package-source</h3><div class="usage"><code>(package-source session version)</code></div><pre class="doc">Decide where to get the packages from
+</pre></div><div class="public" id="var-postgres"><h3>postgres</h3><div class="usage"><code>(postgres session &amp; {:keys [instance]})</code></div><pre class="doc">Install postgres.
+</pre></div><div class="public" id="var-postgresql-conf"><h3>postgresql-conf</h3><div class="usage"><code>(postgresql-conf session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a postgresql.conf file from the arguments.
+
+Options:
+:cluster        The database cluster to use
+:instance  The postgres instance to use</pre></div><div class="public" id="var-postgresql-config-changed-flag"><h3>postgresql-config-changed-flag</h3><div class="usage"></div><pre class="doc">Flag for recognising changes to configuration
+</pre></div><div class="public" id="var-postgresql-script"><h3>postgresql-script</h3><div class="usage"><code>(postgresql-script session &amp; {:keys [as-user instance cluster db-name ignore-result show-stdout title], :or {show-stdout true}, :as options})</code></div><pre class="doc">Execute a postgresql script.
+
+The script is specified using remote-file content options (:content for
+a literal script)
+
+Options for how this script should be run:
+  :as-user username       - Run this script having sudoed to this (system)
+                            user. Default: postgres
+  :db-name database       - the name of the database to connect to
+  :cluster cluster-name   - the name of the cluster to connect to
+  :instance instance-name - the instance (pg install) to use
+  :ignore-result          - Ignore any error return value out of psql
+  :title string           - A title to be used in script output.</pre></div><div class="public" id="var-recovery-conf"><h3>recovery-conf</h3><div class="usage"><code>(recovery-conf session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a recovery.conf file from the arguments.
+
+Options:
+:cluster        The database cluster to use
+:instance  The postgres instance to use</pre></div><div class="public" id="var-service"><h3>service</h3><div class="usage"><code>(service session &amp; {:keys [action if-config-changed if-flag instance], :as options})</code></div><pre class="doc">Control the postgresql service.
+
+Specify `:if-config-changed true` to make actions conditional on a change in
+configuration.
+
+Other options are as for `pallet.action.service/service`. The service
+name is looked up in the request parameters.</pre></div><div class="public" id="var-service-config"><h3>service-config</h3><div class="usage"><code>(service-config session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Configure the service architecture.
+</pre></div><div class="public" id="var-settings"><h3>settings</h3><div class="usage"><code>(settings session settings-map &amp; {:keys [instance]})</code></div><pre class="doc">Add postgresql settings to the session map.
+</pre></div><div class="public" id="var-settings-for-cluster"><h3>settings-for-cluster</h3><div class="usage"><code>(settings-for-cluster session cluster &amp; {:keys [instance]})</code></div><pre class="doc">Returns the settings for the specified cluster
+</pre></div><div class="public" id="var-settings-map"><h3>settings-map</h3><div class="usage"><code>(settings-map {:keys [version components permissions options recovery], :as args})</code></div><pre class="doc">Build a settings map for postgresql.
+   :version     postgresql version to install, eg &quot;9.0&quot;
+   :components  postgresql components to install
+   :permissions permissions to set in pg_hba.conf A sequence of records
+                (either vectors or maps of keywords/strings).
+   :options     options to set in postgresql.conf
+   :recovery    options to set in recovery.conf
+
+Unrecognised options will be added to the main configuration file.
+
+Example: (settings-map
+           {:options {:listen_address [&quot;10.0.1.1&quot;,&quot;localhost&quot;]}})</pre></div><div class="public" id="var-start-conf"><h3>start-conf</h3><div class="usage"><code>(start-conf session &amp; {:keys [instance cluster]})</code></div><pre class="doc">Generates a start.conf file from the arguments. This is debian specific. See
+`service-config`, which works across distributions.
+
+Options:
+:cluster        The database cluster to use
+:instance  The postgres instance to use</pre></div></div></body></html>

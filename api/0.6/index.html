@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html><head><link href="css/default.css" rel="stylesheet" type="text/css"><script src="js/jquery.min.js" type="text/javascript"></script><script src="js/page_effects.js" type="text/javascript"></script><title>Postgres 0.6 API documentation</title></head><body><div id="header"><h1><a href="index.html">Postgres 0.6 API documentation</a></h1></div><div class="sidebar" id="namespaces"><h3>Namespaces</h3><ul><li><a href="pallet.crate.postgres.html">pallet.crate.postgres</a></li></ul></div><div class="namespace-index" id="content"><h2>Postgres 0.6 API documentation</h2><div class="doc">Pallet - parent pom</div><div class="namespace"><h3><a href="pallet.crate.postgres.html">pallet.crate.postgres</a></h3><pre class="doc">Install and configure PostgreSQL.
+
+# Settings
+
+Settings are constructed with the settings-map function.
+
+The settings map has a :permissions, :options, and :recovery keys
+used to specify the default database hba.conf, postgresal.conf and
+recovery.conf files. Paths in the default options should contain a
+&quot;%s&quot; for the database cluster name (n.b. a cluster is a group
+of databases running under the same postmaster process).
+
+The settings-map should be passed to the `settings` crate function
+which fills out the target specific paths, etc. Paths passed to `settings`
+should contain a &quot;%s&quot; to receive the database name.
+
+For each database cluster, `database-settings` must be called to set up the
+database specific settings from the default settings passed to the `settings`
+function.  Database specific settings may be set up by passing a settings map
+to the `database-settings` function. Paths passed to database-settings should
+be complete amd not contain &quot;%s&quot; placeholders.
+
+## Settings map details
+
+These keys can also appear under the :dbs key for database cluster specific
+settings, in which case the paths should be plain strings.
+
+For example:
+
+    {:options {:port 5432
+               :data_directory &quot;/var/lib/pgsql/%s&quot;}
+     :clusters {:db1
+            {:options {:port :5433
+                       :data_directory &quot;/var/lib/pgsql/db1&quot;}}}}
+
+Links:
+-  http://blog.2ndquadrant.com/en/2010/05/install-multiple-postgresql-servers-redhat-linux.html
+</pre><div class="index"><p>Public variables and functions:</p><ul><li><a href="pallet.crate.postgres.html#var-check-settings">check-settings</a></li><li><a href="pallet.crate.postgres.html#var-cluster-settings">cluster-settings</a></li><li><a href="pallet.crate.postgres.html#var-cluster-settings-with-defaults">cluster-settings-with-defaults</a></li><li><a href="pallet.crate.postgres.html#var-conf-file">conf-file</a></li><li><a href="pallet.crate.postgres.html#var-controldata">controldata</a></li><li><a href="pallet.crate.postgres.html#var-create-database">create-database</a></li><li><a href="pallet.crate.postgres.html#var-create-role">create-role</a></li><li><a href="pallet.crate.postgres.html#var-database-data-directory">database-data-directory</a></li><li><a href="pallet.crate.postgres.html#var-default-cluster-name">default-cluster-name</a></li><li><a href="pallet.crate.postgres.html#var-default-settings">default-settings</a></li><li><a href="pallet.crate.postgres.html#var-hba-conf">hba-conf</a></li><li><a href="pallet.crate.postgres.html#var-hot-standby-master">hot-standby-master</a></li><li><a href="pallet.crate.postgres.html#var-hot-standby-replica">hot-standby-replica</a></li><li><a href="pallet.crate.postgres.html#var-initdb">initdb</a></li><li><a href="pallet.crate.postgres.html#var-install-service">install-service</a></li><li><a href="pallet.crate.postgres.html#var-log-settings">log-settings</a></li><li><a href="pallet.crate.postgres.html#var-merge-settings">merge-settings</a></li><li><a href="pallet.crate.postgres.html#var-package-source">package-source</a></li><li><a href="pallet.crate.postgres.html#var-postgres">postgres</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-conf">postgresql-conf</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-config-changed-flag">postgresql-config-changed-flag</a></li><li><a href="pallet.crate.postgres.html#var-postgresql-script">postgresql-script</a></li><li><a href="pallet.crate.postgres.html#var-recovery-conf">recovery-conf</a></li><li><a href="pallet.crate.postgres.html#var-service">service</a></li><li><a href="pallet.crate.postgres.html#var-service-config">service-config</a></li><li><a href="pallet.crate.postgres.html#var-settings">settings</a></li><li><a href="pallet.crate.postgres.html#var-settings-for-cluster">settings-for-cluster</a></li><li><a href="pallet.crate.postgres.html#var-settings-map">settings-map</a></li><li><a href="pallet.crate.postgres.html#var-start-conf">start-conf</a></li></ul></div></div></div></body></html>
