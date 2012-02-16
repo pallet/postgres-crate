@@ -10,7 +10,7 @@
    [pallet.live-test :as live-test]
    [pallet.phase :as phase]
    [pallet.test-utils :as test-utils]
-   [clojure.contrib.logging :as logging])
+   [clojure.tools.logging :as logging])
   (:use clojure.test))
 
 (deftest merge-settings-test
@@ -92,7 +92,7 @@
 (deftest live-test
   (live-test/test-for
    [image (live-test/exclude-images (live-test/images) pgsql-9-unsupported)]
-   (logging/trace (format "postgres live test: image %s" (pr-str image)))
+   (logging/tracef "postgres live test: image %s" (pr-str image))
    (live-test/test-nodes
     [compute node-map node-types]
     {:pgtest
