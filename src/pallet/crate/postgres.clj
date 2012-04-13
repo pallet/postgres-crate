@@ -542,7 +542,8 @@
 (defn settings
   "Add postgresql settings to the session map."
   [session settings-map & {:keys [instance]}]
-  (let [package-source (package-source session (:version settings-map))
+  (let [package-source (get settings-map :package-source
+                            (package-source session (:version settings-map)))
         settings (merge-settings
                   {:package-source package-source}
                   (default-settings
