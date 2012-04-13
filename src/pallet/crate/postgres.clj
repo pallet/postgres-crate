@@ -112,10 +112,10 @@
   [session version]
   (let [os-family (session/os-family session)]
     (cond
-     (and (= :debian os-family) (= "9.0" version)) :debian-backports
-     (and (= :ubuntu os-family) (= "9.0" version)) :martin-pitt-backports
-     (and (= :centos os-family) (= "9.0" version)) :pgdg
-     (and (= :fedora os-family) (= "9.0" version)) :pgdg
+     (and (= :debian os-family) (.startsWith version "9.")) :debian-backports
+     (and (= :ubuntu os-family) (.startsWith version "9.")) :martin-pitt-backports
+     (and (= :centos os-family) (.startsWith version "9.")) :pgdg
+     (and (= :fedora os-family) (.startsWith version "9.")) :pgdg
      :else :native)))
 
 (def pgdg-repo-versions
