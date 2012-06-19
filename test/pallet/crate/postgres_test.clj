@@ -37,7 +37,7 @@
         [:ubuntu :aptitude]
         (postgres/default-settings
           {:server {:image {:os-family :ubuntu} :node-id :id}}
-          :debian :martin-pitt-backports (postgres/settings-map {}))))
+          :debian :debian-base (postgres/settings-map {}))))
     :options :data_directory)))
 
 (deftest settings-test
@@ -47,20 +47,20 @@
       :pallet.stevedore.bash/bash
       (pallet.script/with-script-context
         [:ubuntu :aptitude]
-        (pallet.crate.postgres/settings
+        (pallet.crate.postgres/postgres-settings
          {:server {:image {:os-family :ubuntu} :node-id :id}}
-         (pallet.crate.postgres/settings-map {}))))
+         (pallet.crate.postgres/settings-map {:layout :debian-base}))))
     :parameters :host :id :postgresql :default :options :data_directory )))
 
 (deftest postgres-test
   (is ; just check for compile errors for now
    (build-actions/build-actions
     {}
-    (postgres/settings (postgres/settings-map {:version "8.0"}))
-    (postgres/postgres)
-    (postgres/settings (postgres/settings-map {:version "9.0"}))
+    (postgres/postgres-settings (postgres/settings-map {:version "8.0"}))
+    (postgres/install-postgres)
+    (postgres/postgres-settings (postgres/settings-map {:version "9.0"}))
     (postgres/cluster-settings "db1" {})
-    (postgres/postgres)
+    (postgres/install-postgres)
     (postgres/hba-conf)
     (postgres/postgresql-script :content "some script")
     (postgres/create-database "db")
@@ -70,13 +70,13 @@
   (let [settings
         (second (build-actions/build-actions
                  {}
-                 (postgres/settings
+                 (postgres/postgres-settings
                   (postgres/settings-map
                    {:version "9.0"
                     :wal_directory "/var/lib/postgres/%s/archive/"}))
                  (postgres/cluster-settings "db1" {})
                  (postgres/cluster-settings "db2" {})
-                 (postgres/settings (postgres/settings-map {:version "9.0"}))))
+                 (postgres/postgres-settings (postgres/settings-map {:version "9.0"}))))
         pg-settings (-> settings :parameters :host :id :postgresql :default)]
     (is (-> pg-settings :clusters :db1))
     (is (-> pg-settings :clusters :db2))
@@ -104,10 +104,10 @@
                     (package/package-manager :update)
                     (automated-admin-user/automated-admin-user))
         :settings (phase/phase-fn
-                   (postgres/settings (postgres/settings-map {}))
+                   (postgres/postgres-settings (postgres/settings-map {}))
                    (postgres/cluster-settings "db1" {:options {:port 5433}}))
         :configure (phase/phase-fn
-                    (postgres/postgres))
+                    (postgres/install-postgres))
         :verify (phase/phase-fn
                  (postgres/log-settings)
                  (postgres/initdb)
