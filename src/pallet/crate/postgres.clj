@@ -293,10 +293,7 @@ Links:
   (let [version (:version settings)]
     (merge-settings
      (base-settings session)
-     {:packages (map
-                 #(str "postgresql-" (name %))
-                 (:components settings #{:server :libs}))
-      :default-cluster-name "data"
+     {:default-cluster-name "data"
       :wal_directory (format "/var/lib/pgsql/%s/%%s/archive" version)
       :postgresql_file (format "/var/lib/pgsql/%s/%%s/postgresql.conf" version)
       :options
@@ -330,7 +327,6 @@ Links:
     (merge-settings
      (base-settings session)
      {:components []
-      :packages ["postgresql"]
       :default-cluster-name "data"
       :initdb-via :initdb
       :wal_directory "/var/lib/postgres/%%s/archive/"
