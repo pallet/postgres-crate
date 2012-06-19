@@ -58,6 +58,8 @@ Links:
    pallet.thread-expr
    [pallet.action.package :only [package package-manager package-source]]
    [pallet.action.package.debian-backports :only [debian-backports-repository]]
+   [pallet.core :only [server-spec]]
+   [pallet.phase :only [phase-fn]]
    [pallet.script :only [defscript]]
    [pallet.version-dispatch
     :only [defmulti-version-crate defmulti-version defmulti-os-crate
@@ -997,3 +999,16 @@ END$$;"
   (let [settings (parameter/get-target-settings session :postgresql instance)]
     (logging/log level (format "Postgresql %s %s" (or instance "") settings))
     session))
+
+(defn postgres
+  [settings]
+  (server-spec
+   :phases {:settings (phase-fn
+                        (postgres-settings (settings-map {})))
+            :configure (phase-fn
+                        (initdb)
+                        (hba-conf)
+                        (postgresql-conf)
+                        (service-config)
+                        (service
+                         :action :restart :if-config-changed true))}))
