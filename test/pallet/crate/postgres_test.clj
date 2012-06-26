@@ -41,16 +41,18 @@
     :options :data_directory)))
 
 (deftest settings-test
-  (is
-   (->
-    (pallet.stevedore/with-script-language
-      :pallet.stevedore.bash/bash
-      (pallet.script/with-script-context
-        [:ubuntu :aptitude]
-        (pallet.crate.postgres/postgres-settings
-         {:server {:image {:os-family :ubuntu} :node-id :id}}
-         (pallet.crate.postgres/settings-map {:layout :debian-base}))))
-    :parameters :host :id :postgresql :default :options :data_directory )))
+  (let [settings  (pallet.stevedore/with-script-language
+                    :pallet.stevedore.bash/bash
+                    (pallet.script/with-script-context
+                      [:ubuntu :aptitude]
+                      (pallet.crate.postgres/postgres-settings
+                       {:server {:image {:os-family :ubuntu} :node-id :id}}
+                       (pallet.crate.postgres/settings-map
+                        {:layout :debian-base}))))]
+    (is
+     (->
+      settings
+      :parameters :host :id :postgresql :default :options :data_directory))))
 
 (deftest postgres-test
   (is ; just check for compile errors for now
@@ -76,7 +78,8 @@
                     :wal_directory "/var/lib/postgres/%s/archive/"}))
                  (postgres/cluster-settings "db1" {})
                  (postgres/cluster-settings "db2" {})
-                 (postgres/postgres-settings (postgres/settings-map {:version "9.0"}))))
+                 (postgres/postgres-settings
+                  (postgres/settings-map {:version "9.0"}))))
         pg-settings (-> settings :parameters :host :id :postgresql :default)]
     (is (-> pg-settings :clusters :db1))
     (is (-> pg-settings :clusters :db2))

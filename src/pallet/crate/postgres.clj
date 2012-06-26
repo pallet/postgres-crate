@@ -123,9 +123,10 @@ Links:
                             #(str "postgresql-" (name %))
                             (:components settings #{:server :libs}))
                  :layout :rh-base)
-               (assoc session
-                 :strategy :package-source
-                 :rpm {:name "pgdg.rpm" :url (pgdg-url version os)}
+               (assoc settings
+                 :strategy :rpm-repo
+                 :rpm {:name "pgdg.rpm"
+                       :url (pgdg-url (version-string version) os)}
                  :packages (map
                             #(str "postgresql"
                                   (string/replace target-version "." "")
@@ -217,6 +218,14 @@ Links:
    session
    (action/with-precedence {:always-before `package/package}
      (apply-map-> package/add-rpm (:name rpm) rpm))))
+
+(defmethod install-method :rpm-repo
+  [session {:keys [rpm packages] :as settings}]
+  (->
+   session
+   (action/with-precedence {:always-before `package/package}
+     (apply-map-> package/add-rpm (:name rpm) rpm))
+   (for-> [pkg packages] (package pkg))))
 
 
 ;;; Default settings
