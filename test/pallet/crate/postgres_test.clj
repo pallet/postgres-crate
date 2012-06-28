@@ -10,7 +10,7 @@
    [pallet.live-test :as live-test]
    [pallet.phase :as phase]
    [pallet.test-utils :as test-utils]
-   [clojure.contrib.logging :as logging])
+   [clojure.tools.logging :as logging])
   (:use clojure.test))
 
 (deftest merge-settings-test
@@ -37,30 +37,32 @@
         [:ubuntu :aptitude]
         (postgres/default-settings
           {:server {:image {:os-family :ubuntu} :node-id :id}}
-          :debian :martin-pitt-backports (postgres/settings-map {}))))
+          :debian :debian-base (postgres/settings-map {}))))
     :options :data_directory)))
 
 (deftest settings-test
-  (is
-   (->
-    (pallet.stevedore/with-script-language
-      :pallet.stevedore.bash/bash
-      (pallet.script/with-script-context
-        [:ubuntu :aptitude]
-        (pallet.crate.postgres/settings
-         {:server {:image {:os-family :ubuntu} :node-id :id}}
-         (pallet.crate.postgres/settings-map {}))))
-    :parameters :host :id :postgresql :default :options :data_directory )))
+  (let [settings  (pallet.stevedore/with-script-language
+                    :pallet.stevedore.bash/bash
+                    (pallet.script/with-script-context
+                      [:ubuntu :aptitude]
+                      (pallet.crate.postgres/postgres-settings
+                       {:server {:image {:os-family :ubuntu} :node-id :id}}
+                       (pallet.crate.postgres/settings-map
+                        {:layout :debian-base}))))]
+    (is
+     (->
+      settings
+      :parameters :host :id :postgresql :default :options :data_directory))))
 
 (deftest postgres-test
   (is ; just check for compile errors for now
    (build-actions/build-actions
     {}
-    (postgres/settings (postgres/settings-map {:version "8.0"}))
-    (postgres/postgres)
-    (postgres/settings (postgres/settings-map {:version "9.0"}))
+    (postgres/postgres-settings (postgres/settings-map {:version "8.0"}))
+    (postgres/install-postgres)
+    (postgres/postgres-settings (postgres/settings-map {:version "9.0"}))
     (postgres/cluster-settings "db1" {})
-    (postgres/postgres)
+    (postgres/install-postgres)
     (postgres/hba-conf)
     (postgres/postgresql-script :content "some script")
     (postgres/create-database "db")
@@ -70,13 +72,14 @@
   (let [settings
         (second (build-actions/build-actions
                  {}
-                 (postgres/settings
+                 (postgres/postgres-settings
                   (postgres/settings-map
                    {:version "9.0"
                     :wal_directory "/var/lib/postgres/%s/archive/"}))
                  (postgres/cluster-settings "db1" {})
                  (postgres/cluster-settings "db2" {})
-                 (postgres/settings (postgres/settings-map {:version "9.0"}))))
+                 (postgres/postgres-settings
+                  (postgres/settings-map {:version "9.0"}))))
         pg-settings (-> settings :parameters :host :id :postgresql :default)]
     (is (-> pg-settings :clusters :db1))
     (is (-> pg-settings :clusters :db2))
@@ -92,7 +95,7 @@
 (deftest live-test
   (live-test/test-for
    [image (live-test/exclude-images (live-test/images) pgsql-9-unsupported)]
-   (logging/trace (format "postgres live test: image %s" (pr-str image)))
+   (logging/tracef "postgres live test: image %s" (pr-str image))
    (live-test/test-nodes
     [compute node-map node-types]
     {:pgtest
@@ -104,10 +107,10 @@
                     (package/package-manager :update)
                     (automated-admin-user/automated-admin-user))
         :settings (phase/phase-fn
-                   (postgres/settings (postgres/settings-map {}))
+                   (postgres/postgres-settings (postgres/settings-map {}))
                    (postgres/cluster-settings "db1" {:options {:port 5433}}))
         :configure (phase/phase-fn
-                    (postgres/postgres))
+                    (postgres/install-postgres))
         :verify (phase/phase-fn
                  (postgres/log-settings)
                  (postgres/initdb)
