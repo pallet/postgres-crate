@@ -1,5 +1,11 @@
 # Release notes
 
+## postgres-0.7.0-beta.1
+
+- update for pallet 0.7.0
+  Note this changes function names to use postgres-settings and
+  install-postgres instead of settings and postgres
+
 ## postgres-0.6.1
 
 - Add an option to postgresql-script to specify the database name
