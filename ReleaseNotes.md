@@ -1,5 +1,10 @@
 # Release notes
 
+## 0.6.2
+
+- Update pgdg 9.0 to release 5, and factor out pgdg-url
+  Allow for redef of pgdg-url outside of the crate.
+
 ## postgres-0.6.1
 
 - Add an option to postgresql-script to specify the database name
