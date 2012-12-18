@@ -1009,7 +1009,7 @@ END$$;"
   [settings]
   (server-spec
    :phases {:settings (phase-fn
-                        (postgres-settings (settings-map {})))
+                        (postgres-settings (settings-map settings)))
             :configure (phase-fn
                         (initdb)
                         (hba-conf)
