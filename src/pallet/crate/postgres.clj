@@ -95,7 +95,7 @@ Links:
 
 (def ^{:dynamic true} *pgdg-repo-versions*
   {"9.0" "9.0-5"
-   "9.1" "9.1-4"
+   "9.1" "9.1-5"
    "9.2" "9.2-5"})
 
 (defn pgdg-url
@@ -126,7 +126,8 @@ Links:
                (assoc settings
                  :strategy :rpm-repo
                  :rpm {:name "pgdg.rpm"
-                       :url (pgdg-url (version-string version) os)}
+                       :url (pgdg-url (version-string version)
+                                      (if (= os :rhel) "redhat" os))}
                  :packages (map
                             #(str "postgresql"
                                   (string/replace target-version "." "")
@@ -1009,7 +1010,7 @@ END$$;"
   [settings]
   (server-spec
    :phases {:settings (phase-fn
-                        (postgres-settings (settings-map {})))
+                        (postgres-settings (settings-map settings)))
             :configure (phase-fn
                         (initdb)
                         (hba-conf)
