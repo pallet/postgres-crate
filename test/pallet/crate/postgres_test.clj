@@ -88,8 +88,9 @@
   (server-spec
    :extends [(postgres/server-spec {})]
    :phases {:settings (plan-fn
-                        (postgres/cluster-settings
-                         "db1" {:options {:port 5432}}))
+                        ;; (postgres/cluster-settings
+                        ;;  "db1" {:options {:port 5432}})
+                        )
             :init (plan-fn
                     (postgres/create-database "db")
                     (postgres/create-role "u1"))
