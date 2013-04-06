@@ -86,7 +86,14 @@
 
 (def test-server-spec
   (server-spec
-   :extends [(postgres/server-spec {})]
+   :extends [(postgres/server-spec
+              (postgres/settings-map {:options {:listen_addresses "*"}
+                                      :permissions
+                                      [{:connection-type "host"
+                                        :database "all"
+                                        :user "all"
+                                        :address "10.0.2.2/24"
+                                        :auth-method "trust"}]}))]
    :phases {:settings (plan-fn
                         ;; (postgres/cluster-settings
                         ;;  "db1" {:options {:port 5432}})
