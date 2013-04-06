@@ -5,7 +5,7 @@
    [pallet.build-actions :refer [build-actions]]
    [pallet.api :refer [lift node-spec plan-fn server-spec] :as api]
    [pallet.crate.automated-admin-user :as automated-admin-user]
-   [pallet.crate.network-service :as network-service]
+   [pallet.crate.network-service :refer [wait-for-port-listen]]
    [pallet.crate.postgres :as postgres]
    [pallet.live-test :as live-test]
    [pallet.script :refer [with-script-context]]
@@ -89,10 +89,12 @@
    :extends [(postgres/server-spec {})]
    :phases {:settings (plan-fn
                         (postgres/cluster-settings
-                         "db1" {:options {:port 5433}}))
+                         "db1" {:options {:port 5432}}))
             :init (plan-fn
                     (postgres/create-database "db")
-                    (postgres/create-role "u1"))}))
+                    (postgres/create-role "u1"))
+            :test (plan-fn
+                    (wait-for-port-listen 5432))}))
 
 
 (def pgsql-9-unsupported
@@ -137,8 +139,8 @@
                  (postgres/postgresql-script
                   :content "create temporary table table2 ();"
                   :show-stdout true :cluster "db1")
-                 (pallet.crate.network-service/wait-for-port-listen 5432)
-                 (pallet.crate.network-service/wait-for-port-listen 5433))}
+                 (wait-for-port-listen 5432)
+                 (wait-for-port-listen 5433))}
        :count 1
        :node-spec (node-spec :image image)))}
     (is
