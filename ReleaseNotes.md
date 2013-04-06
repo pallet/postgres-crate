@@ -1,5 +1,14 @@
 # Release notes
 
+## postgres-0.7.0-beta.2
+
+- Partially fix issue #2
+
+- Actually use the settings passed to postgres
+  The settings argument of pallet.crate.postgres/postgres was not actually 
+  used. This patch fixes this by passing it to the existing settings-map 
+  call instead.
+
 ## postgres-0.7.0-beta.1
 
 - update for pallet 0.7.0
