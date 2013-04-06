@@ -7,7 +7,7 @@
     <version>0.7.1</version>
   </parent>
   <artifactId>postgres</artifactId>
-  <version>0.7.0-beta.2</version>
+  <version>0.7.0-SNAPSHOT</version>
 
   <scm>
     <connection>scm:git:git://github.com/pallet/postgres-crate.git</connection>
