@@ -1,14 +1,15 @@
 (ns pallet.crate.postgres-test
   (:require
-   [pallet.action.exec-script :as exec-script]
-   [pallet.action.package :as package]
-   [pallet.build-actions :as build-actions]
-   [pallet.core :as core]
+   [pallet.actions
+    :refer [exec-checked-script package package-manager minimal-packages]]
+   [pallet.build-actions :refer [build-actions]]
+   [pallet.api :refer [lift node-spec plan-fn server-spec] :as api]
    [pallet.crate.automated-admin-user :as automated-admin-user]
    [pallet.crate.network-service :as network-service]
    [pallet.crate.postgres :as postgres]
    [pallet.live-test :as live-test]
-   [pallet.phase :as phase]
+   [pallet.script :refer [with-script-context]]
+   [pallet.stevedore :refer [with-script-language]]
    [pallet.test-utils :as test-utils]
    [clojure.tools.logging :as logging])
   (:use clojure.test))
@@ -31,55 +32,49 @@
 (deftest default-settings-test
   (is
    (->
-    (pallet.stevedore/with-script-language
-      :pallet.stevedore.bash/bash
-      (pallet.script/with-script-context
-        [:ubuntu :aptitude]
+    (with-script-language :pallet.stevedore.bash/bash
+      (with-script-context [:ubuntu :aptitude]
         (postgres/default-settings
           {:server {:image {:os-family :ubuntu} :node-id :id}}
           :debian :debian-base (postgres/settings-map {}))))
     :options :data_directory)))
 
 (deftest settings-test
-  (let [settings  (pallet.stevedore/with-script-language
-                    :pallet.stevedore.bash/bash
-                    (pallet.script/with-script-context
-                      [:ubuntu :aptitude]
-                      (pallet.crate.postgres/postgres-settings
-                       {:server {:image {:os-family :ubuntu} :node-id :id}}
-                       (pallet.crate.postgres/settings-map
-                        {:layout :debian-base}))))]
+  (let [settings (with-script-language :pallet.stevedore.bash/bash
+                   (with-script-context [:ubuntu :aptitude]
+                     (postgres/settings
+                      {:server {:image {:os-family :ubuntu} :node-id :id}}
+                      (postgres/settings-map
+                       {:layout :debian-base}))))]
     (is
      (->
       settings
       :parameters :host :id :postgresql :default :options :data_directory))))
 
 (deftest postgres-test
-  (is ; just check for compile errors for now
-   (build-actions/build-actions
-    {}
-    (postgres/postgres-settings (postgres/settings-map {:version "8.0"}))
-    (postgres/install-postgres)
-    (postgres/postgres-settings (postgres/settings-map {:version "9.0"}))
-    (postgres/cluster-settings "db1" {})
-    (postgres/install-postgres)
-    (postgres/hba-conf)
-    (postgres/postgresql-script :content "some script")
-    (postgres/create-database "db")
-    (postgres/create-role "user"))))
+  (is                                   ; just check for compile errors for now
+   (build-actions {}
+     (postgres/settings (postgres/settings-map {:version "8.0"}))
+     (postgres/install)
+     (postgres/settings (postgres/settings-map {:version "9.0"}))
+     (postgres/cluster-settings "db1" {})
+     (postgres/install)
+     (postgres/hba-conf)
+     (postgres/postgresql-script :content "some script")
+     (postgres/create-database "db")
+     (postgres/create-role "user"))))
 
 (deftest cluster-settings-test
   (let [settings
-        (second (build-actions/build-actions
-                 {}
-                 (postgres/postgres-settings
-                  (postgres/settings-map
-                   {:version "9.0"
-                    :wal_directory "/var/lib/postgres/%s/archive/"}))
-                 (postgres/cluster-settings "db1" {})
-                 (postgres/cluster-settings "db2" {})
-                 (postgres/postgres-settings
-                  (postgres/settings-map {:version "9.0"}))))
+        (second (build-actions {}
+                  (postgres/settings
+                   (postgres/settings-map
+                    {:version "9.0"
+                     :wal_directory "/var/lib/postgres/%s/archive/"}))
+                  (postgres/cluster-settings "db1" {})
+                  (postgres/cluster-settings "db2" {})
+                  (postgres/settings
+                   (postgres/settings-map {:version "9.0"}))))
         pg-settings (-> settings :parameters :host :id :postgresql :default)]
     (is (-> pg-settings :clusters :db1))
     (is (-> pg-settings :clusters :db2))
@@ -87,6 +82,18 @@
      (re-find #"db1/archive" (-> pg-settings :clusters :db1 :wal_directory)))
     (is
      (re-find #"db2/archive" (-> pg-settings :clusters :db2 :wal_directory)))))
+
+
+(def test-server-spec
+  (server-spec
+   :extends [(postgres/server-spec {})]
+   :phases {:settings (plan-fn
+                        (postgres/cluster-settings
+                         "db1" {:options {:port 5433}}))
+            :init (plan-fn
+                    (postgres/create-database "db")
+                    (postgres/create-role "u1"))}))
+
 
 (def pgsql-9-unsupported
   [{:os-family :debian :os-version-matches "5.0.7"}
@@ -100,18 +107,17 @@
     [compute node-map node-types]
     {:pgtest
      (->
-      (core/server-spec
+      (server-spec
        :phases
-       {:bootstrap (phase/phase-fn
-                    (package/minimal-packages)
-                    (package/package-manager :update)
+       {:bootstrap (plan-fn
+                    (minimal-packages)
+                    (package-manager :update)
                     (automated-admin-user/automated-admin-user))
-        :settings (phase/phase-fn
-                   (postgres/postgres-settings (postgres/settings-map {}))
+        :settings (plan-fn
+                   (postgres/settings (postgres/settings-map {}))
                    (postgres/cluster-settings "db1" {:options {:port 5433}}))
-        :configure (phase/phase-fn
-                    (postgres/install-postgres))
-        :verify (phase/phase-fn
+        :configure (plan-fn (postgres/install))
+        :verify (plan-fn
                  (postgres/log-settings)
                  (postgres/initdb)
                  (postgres/initdb :cluster "db1")
@@ -134,7 +140,7 @@
                  (pallet.crate.network-service/wait-for-port-listen 5432)
                  (pallet.crate.network-service/wait-for-port-listen 5433))}
        :count 1
-       :node-spec (core/node-spec :image image)))}
+       :node-spec (node-spec :image image)))}
     (is
-     (core/lift
+     (lift
       (val (first node-types)) :phase [:settings :verify] :compute compute)))))

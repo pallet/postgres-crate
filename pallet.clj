@@ -2,12 +2,12 @@
 
 (require
  '[pallet.crate.postgres-test
-   :refer [postgres-test-spec]]
+   :refer [test-server-spec]]
  '[pallet.crates.test-nodes :refer [node-specs]])
 
 (defproject postgres-crate
   :provider node-specs                  ; supported pallet nodes
-  :groups [(group-spec "postgres-test"
+  :groups [(group-spec "pgtest"
              :extends [with-automated-admin-user
-                       postgres-test-spec]
+                       test-server-spec]
              :roles #{:live-test :default :postgres})])
