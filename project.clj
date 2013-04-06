@@ -1,4 +1,4 @@
-(defproject com.palletops/postgres-crate "0.8.0-SNAPSHOT"
+(defproject com.palletops/postgres-crate "0.8.0-313-SNAPSHOT"
   :description "Pallet crate to install, configure and use postgres"
   :url "http://palletops.com"
   :license {:name "Eclipse Public License"
