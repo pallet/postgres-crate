@@ -887,7 +887,7 @@ Links:
 (defn- create-role-pgsql
   [version]
   (cond
-   (re-matches #"9.[0-2]" version)
+   (not (version-less (as-version-vector version) [9 0]))
    "do $$declare user_rec record;
 BEGIN
  select into user_rec * from pg_roles where rolname='%1$s';
