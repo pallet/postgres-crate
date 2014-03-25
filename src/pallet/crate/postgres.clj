@@ -152,27 +152,39 @@ Links:
 ;;                  :packages ["libpq5" (str "postgresql-" target-version)]
 ;;                  :layout :debian-base))))))
 
+(def ^:dynamic *postgres-org-repo-release*
+  {"10.04" "lucid"
+   "12.04" "precise"
+   "13.10" "saucy"
+   "14.04" "trusty"})
+
 (defmethod-version-plan
-    install-strategy {:os :ubuntu}
-    [os os-version version settings]
+  install-strategy {:os :ubuntu}
+  [os os-version version settings]
   (->
    (cond
-     (:install-strategy settings) settings
-     (:package-source settings) (assoc settings :install-strategy :package-source)
-     :else (let [default-version (os-map-lookup @postgres-package-version)
-                 target-version (:version settings)]
-             (if (= (version-string default-version) target-version)
-               (assoc settings
-                 :install-strategy :packages
-                 :packages ["postgresql"]
-                 :layout :debian-base)
-               (assoc settings
-                 :install-strategy :package-source
-                 :package-source {:name "Martin Pitt backports"
-                                  :aptitude {:url "ppa:pitti/postgresql"}
-                                  :apt {:url "ppa:pitti/postgresql"}}
-                 :packages [(str "postgresql-" target-version)]
-                 :layout :debian-base))))))
+    (:install-strategy settings) settings
+    (:package-source settings) (assoc settings :install-strategy :package-source)
+    :else (let [default-version (os-map-lookup @postgres-package-version)
+                target-version (:version settings)
+                release (str (*postgres-org-repo-release* (pallet.crate/os-version))
+                             "-pgdg")]
+            (if (= (version-string default-version) target-version)
+              (assoc settings
+                :install-strategy :packages
+                :packages ["postgresql"]
+                :layout :debian-base)
+              (assoc settings
+                :install-strategy :package-source
+                :package-source {:name "postgresql" 
+                                 :aptitude {:url "http://apt.postgresql.org/pub/repos/apt/ "
+                                            :release release
+                                            :key-url "https://www.postgresql.org/media/keys/ACCC4CF8.asc"}
+                                 :apt {:url "http://apt.postgresql.org/pub/repos/apt/"
+                                       :release release
+                                       :key-url "https://www.postgresql.org/media/keys/ACCC4CF8.asc"}}
+                :packages [(str "postgresql-" target-version)]
+                :layout :debian-base))))))
 
 (defmethod-version-plan
     install-strategy {:os :arch}
