@@ -59,6 +59,9 @@
    (os-map
     {{:os :linux} [8]
      {:os :amzn-linux :os-version [[2013]]} [9 2]
+     {:os :debian :os-version [6]} [8 4]
+     {:os :debian :os-version [7]} [9 1]
+     {:os :debian :os-version [8]} [9 3]
      {:os :ubuntu :os-version [[12] [13 10]]} [9 1]
      {:os :ubuntu :os-version [[14 04]]} [9 3]})))
 
