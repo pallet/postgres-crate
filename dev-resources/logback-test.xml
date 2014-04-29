@@ -34,7 +34,6 @@
 
   <appender name="PALLETFILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
     <file>logs/pallet.log</file>
-    <append>false</append>
     <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
       <fileNamePattern>logs/old/pallet.%d{yyyy-MM-dd}.log</fileNamePattern>
       <maxHistory>3</maxHistory>
