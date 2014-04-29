@@ -9,5 +9,17 @@
  :provided
  {:dependencies [[org.clojure/clojure "1.6.0"]
                  [com.palletops/pallet "0.8.0-SNAPSHOT"]]}
+ :aws {:pallet/test-env
+       {:test-specs
+        [;; {:selector :ubuntu-13-10}
+         ;; {:selector :ubuntu-13-04
+         ;;  :expected [{:feature ["oracle-java-8"]
+         ;;              :expected? :not-supported}]}
+         ;; {:selector :ubuntu-12-04}
+         {:selector :amzn-linux-2013-092}
+         ;; {:selector :centos-6-5}
+         ;; {:selector :debian-7-4}
+         ;; {:selector :debian-6-0}
+         ]}}
  :vmfest {:pallet/test-env {:test-specs
                             [{:selector :ubuntu-13-04}]}}}

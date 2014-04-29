@@ -89,7 +89,8 @@ Links:
   (let [arch (if (is-64bit? (target-node)) "x86_64" "i386")]
     {:install-strategy :rpm-repo
      :rpm {:name "pgdg.rpm"
-           :url (kb/pgdg-url (version-string version) os-family os-version arch)}
+           :url (kb/pgdg-url
+                 (version-string version) os-family os-version arch)}
      :packages (kb/pgdg-packages
                 (version-string version)
                 components)
@@ -110,19 +111,14 @@ Links:
   {:install-strategy :packages
    :packages (kb/yum-packages
               (version-string version)
-              (or components #{:server :libs}))
-   :layout :rh-base})
+              (or components #{:server :libs}))})
 
 (defn apt-packages-settings
   [version components]
   {:install-strategy :packages
    :packages (kb/apt-packages
               (version-string version)
-              components)
-   :layout :debian-base})
-
-;; (def xx "aa" :a :b
-;;   )
+              components)})
 
 (defmulti-version-plan install-strategy
   ;; Default install strategy, if none supplied.
@@ -135,28 +131,6 @@ Links:
 (defmethod-version-plan install-strategy {:os :debian-base}
   [os os-version version settings]
   (apt-packages-settings version nil))
-
-;; (defmethod-version-plan
-;;     install-strategy {:os :arch}
-;;     [os os-version version settings]
-;;   (->
-;;    (cond
-;;      (:install-strategy settings) settings
-;;      (:package-source settings) (assoc settings :install-strategy :package-source)
-;;      :else (let [default-version (os-map-lookup @postgres-package-version)
-;;                  target-version (:version settings)]
-;;              (if (= (version-string default-version) target-version)
-;;                (assoc settings
-;;                  :install-strategy :packages
-;;                  :packages ["postgresql"]
-;;                  :layout :arch)
-;;                (throw
-;;                 (ex-info
-;;                  (format "No install strategy for postgres %s on %s %s"
-;;                          version os os-version)
-;;                  {:reason :no-install-strategy
-;;                   :version version :os os :os-version os-version})))))))
-
 
 ;;; Default settings
 (def default-settings-map
@@ -349,6 +323,7 @@ Links:
                    :hot-standby-master (hot-standby-master settings)
                    :hot-standby-replica (hot-standby-replica settings)
                    settings)]
+    (logging/debugf "Postgresql cluster %s settings %s" cluster-name settings)
     (update-settings
      facility instance-id
      assoc-in [:clusters (keyword cluster-name)]
@@ -373,7 +348,7 @@ Links:
                    (merge (install-strategy version settings) settings))
         settings (merge-settings
                   (kb/layout-settings
-                   (os-family) (:layout settings) version)
+                   (os-family) (:layout settings (os-family)) version)
                   settings)
         old-settings (get-settings facility options)]
     (logging/debugf "Postgresql Settings %s" settings)
@@ -498,7 +473,7 @@ Links:
                   (if (not (file-exists? ~(str data-dir "/PG_VERSION")))
                     ("sudo"
                      -u ~(:owner settings "postgres")
-                     (str ~(or (:bin settings) "") initdb)
+                     (lib/file ~(:bin settings) initdb)
                      -D ~data-dir)))))))
 
 ;;; Scripts

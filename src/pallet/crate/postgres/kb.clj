@@ -1,7 +1,7 @@
 (ns pallet.crate.postgres.kb
   "Knowledge base for postgres install and configuration"
   (:require
-   [clojure.string :as string]
+   [clojure.string :as string :refer [split]]
    [pallet.version-dispatch :refer [os-map]]
    [pallet.compute :refer [os-hierarchy]]
    [pallet.utils :refer [deep-merge]]
@@ -32,7 +32,10 @@
   (fn [os-family layout version]
     {:pre [(keyword? layout)
            (string? version)]}
-    layout))
+    layout)
+  :hierarchy #'os-hierarchy)
+
+(prefer-method layout-settings :amzn-linux :rh-base)
 
 (defn base-layout
   "Base layout used as a default with common options."
@@ -55,6 +58,7 @@
   (atom                                 ; allow for open extension
    (os-map
     {{:os :linux} [8]
+     {:os :amzn-linux :os-version [[2013]]} [9 2]
      {:os :ubuntu :os-version [[12] [13 10]]} [9 1]
      {:os :ubuntu :os-version [[14 04]]} [9 3]})))
 
@@ -66,7 +70,7 @@
   [version components]
   {:pre [(string? version)]}
   (map
-   #(format "postgresql-%s-%s" (name %) version)
+   #(format "postgresql%s-%s" (first (split version #"\.")) (name %))
    components))
 
 ;;; ## Apt system packages
@@ -175,16 +179,39 @@
 (defmethod layout-settings :rh-base
   [os-family layout version]
   {:post [(validate Layout %)]}
-  (deep-merge
-   (base-layout)
-   {:default-cluster-name "data"
-    :wal_directory (format "/var/lib/pgsql/%s/%%s/archive" version)
-    :postgresql_file (format "/var/lib/pgsql/%s/%%s/postgresql.conf" version)
-    :options
-    {:data_directory (format "/var/lib/pgsql/%s/%%s" version)
-     :hba_file (format "/var/lib/pgsql/%s/%%s/pg_hba.conf" version)
-     :ident_file (format "/var/lib/pgsql/%s/%%s/pg_ident.conf" version)
-     :external_pid_file (format "/var/run/postmaster-%s-%%s.pid" version)}}))
+  (let [major (first (split version #"\."))]
+    (deep-merge
+     (base-layout)
+     {:bin "/usr/bin"
+      :default-cluster-name "data"
+      :share "/usr/share/pgsql"
+      :wal_directory (format "/var/lib/pgsql/%s/%%s/archive" version)
+      :postgresql_file (format "/var/lib/pgsql/%s/%%s/postgresql.conf" version)
+      :options
+      {:data_directory (format "/var/lib/pgsql/%s/%%s" version)
+       :hba_file (format "/var/lib/pgsql/%s/%%s/pg_hba.conf" version)
+       :ident_file (format "/var/lib/pgsql/%s/%%s/pg_ident.conf" version)
+       :external_pid_file (format "/var/run/postmaster-%s-%%s.pid" version)
+       :unix_socket_directory "/var/run/postgresql"}})))
+
+(defmethod layout-settings :amzn-linux
+  [os-family layout version]
+  {:post [(validate Layout %)]}
+  (let [major (first (split version #"\."))
+        data (format "/var/lib/pgsql%s/data/" major)]
+    (deep-merge
+     (base-layout)
+     {:bin "/usr/bin"
+      :default-cluster-name "data"
+      :share "/usr/share/pgsql"
+      :wal_directory (format "%s/%%s/archive" data)
+      :postgresql_file (format "%s/%%s/postgresql.conf" data)
+      :options
+      {:data_directory data
+       :hba_file (format "%s/pg_hba.conf" data)
+       :ident_file (format "%s/pg_ident.conf" data)
+       :external_pid_file (format "/var/run/postmaster-%s.pid" version)
+       :unix_socket_directory "/var/run/postgresql"}})))
 
 (defmethod layout-settings :pgdg
   [os-family package-source version]
