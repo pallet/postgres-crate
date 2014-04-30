@@ -1,43 +1,3 @@
-[Repository](https://github.com/pallet/postgres-crate) &#xb7;
-[Issues](https://github.com/pallet/postgres-crate/issues) &#xb7;
-[API docs](http://palletops.com/postgres-crate/0.8/api) &#xb7;
-[Annotated source](http://palletops.com/postgres-crate/0.8/annotated/uberdoc.html) &#xb7;
-[Release Notes](https://github.com/pallet/postgres-crate/blob/develop/ReleaseNotes.md)
-
-A Pallet crate to install and configure postgres.
-
-### Dependency Information
-
-```clj
-:dependencies [[com.palletops/postgres-crate "0.8.0-alpha.1"]]
-```
-
-### Releases
-
-<table>
-<thead>
-  <tr><th>Pallet</th><th>Crate Version</th><th>Repo</th><th>GroupId</th></tr>
-</thead>
-<tbody>
-  <tr>
-    <th>0.8.0-beta.6</th>
-    <td>0.8.0-alpha.1</td>
-    <td>clojars</td>
-    <td>com.palletops</td>
-    <td><a href='https://github.com/pallet/postgres-crate/blob/0.8.0-alpha.1/ReleaseNotes.md'>Release Notes</a></td>
-    <td><a href='https://github.com/pallet/postgres-crate/blob/0.8.0-alpha.1/'>Source</a></td>
-  </tr>
-  <tr>
-    <th>0.7.2</th>
-    <td>0.7.0-beta.2</td>
-    <td>clojars</td>
-    <td>com.palletops</td>
-    <td><a href='https://github.com/pallet/postgres-crate/blob/0.7.0-beta.2/ReleaseNotes.md'>Release Notes</a></td>
-    <td><a href='https://github.com/pallet/postgres-crate/blob/0.7.0-beta.2/'>Source</a></td>
-  </tr>
-</tbody>
-</table>
-
 ## Usage
 
 The `server-spec` function provides a convenient pallet server spec for
@@ -126,14 +86,3 @@ The postgres crate uses the following settings:
     path to pid file
   - `:unix_socket_directory`
     path to directory for unix sockets
-
-## Support
-
-[On the group](http://groups.google.com/group/pallet-clj), or
-[#pallet](http://webchat.freenode.net/?channels=#pallet) on freenode irc.
-
-## License
-
-Licensed under [EPL](http://www.eclipse.org/legal/epl-v10.html)
-
-Copyright 2013 Hugo Duncan.
