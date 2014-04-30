@@ -5,7 +5,7 @@
    [pallet.version-dispatch :refer [os-map]]
    [pallet.compute :refer [os-hierarchy]]
    [pallet.utils :refer [deep-merge]]
-   [schema.core :as schema :refer [enum validate]]))
+   [schema.core :as schema :refer [enum maybe validate]]))
 
 (def Layout
   {:bin String
@@ -20,6 +20,8 @@
    :use-port-in-pidfile schema/Bool
    :owner String
    :wal_directory String
+   :selunix-port-t (maybe String)
+   :selunix-file-t (maybe String)
    :options {:external_pid_file String
              :data_directory String
              :hba_file String
@@ -46,6 +48,8 @@
    :has-multicluster-service false
    :initdb-via :initdb
    :use-port-in-pidfile false
+   :selunix-port-t nil
+   :selunix-file-t nil
    :options {:external_pid_file "/var/run/postgresql.pid"}})
 
 
@@ -58,6 +62,7 @@
   (atom                                 ; allow for open extension
    (os-map
     {{:os :linux} [8]
+     {:os :centos :os-version [6]} [8 4]
      {:os :amzn-linux :os-version [[2013]]} [9 2]
      {:os :debian :os-version [6]} [8 4]
      {:os :debian :os-version [7]} [9 1]
@@ -67,26 +72,41 @@
 
 
 ;;; ## Yum system packages
-(defn yum-packages
-  "Return a sequence of package names for system packages on yum based
-  systems."
-  [version components]
+(defmulti package-names
+  "Return a sequence of package names for system packages."
+  (fn [os version components]
+    os)
+  :hierarchy #'os-hierarchy)
+
+(prefer-method package-names :amzn-linux :rh-base)
+
+(defmethod package-names :rh-base
+  [os version components]
+  {:pre [(string? version)]}
+  (conj
+   (map
+    #(format "postgresql-%s" (name %))
+    (or components #{:server :libs}))
+   "postgresql"))
+
+(defmethod package-names :amzn-linux
+  [os version components]
   {:pre [(string? version)]}
   (map
    #(format "postgresql%s-%s" (first (split version #"\.")) (name %))
-   components))
+   (or components #{:server :libs})))
 
 ;;; ## Apt system packages
-(defn apt-packages
-  "Return a sequence of package names for system packages on apt based
-  systems."
-  [version components]
+(defmethod package-names :debian-base
+  [os version components]
   {:pre [(string? version)]}
   (conj
    (map
     #(format "postgresql-%s-%s" version (name %))
     components)
    (format "postgresql-%s" version)))
+
+(prefer-method package-names :amzn-linux :rh-base)
 
 ;;; # Postgres RPM Repository
 
@@ -188,13 +208,15 @@
      {:bin "/usr/bin"
       :default-cluster-name "data"
       :share "/usr/share/pgsql"
-      :wal_directory (format "/var/lib/pgsql/%s/%%s/archive" version)
-      :postgresql_file (format "/var/lib/pgsql/%s/%%s/postgresql.conf" version)
+      :wal_directory "/var/lib/pgsql/archive"
+      :postgresql_file "/var/lib/pgsql/data/postgresql.conf"
+      :selunix-port-t "postgresql_port_t"
+      :selunix-file-t "postgresql_db_t"
       :options
-      {:data_directory (format "/var/lib/pgsql/%s/%%s" version)
-       :hba_file (format "/var/lib/pgsql/%s/%%s/pg_hba.conf" version)
-       :ident_file (format "/var/lib/pgsql/%s/%%s/pg_ident.conf" version)
-       :external_pid_file (format "/var/run/postmaster-%s-%%s.pid" version)
+      {:data_directory "/var/lib/pgsql/data"
+       :hba_file "/var/lib/pgsql/data/pg_hba.conf"
+       :ident_file "/var/lib/pgsql/data/pg_ident.conf"
+       :external_pid_file "/var/run/postmaster.pid"
        :unix_socket_directory "/var/run/postgresql"}})))
 
 (defmethod layout-settings :amzn-linux

@@ -106,17 +106,11 @@ Links:
    :packages (kb/postgres-apt-packages (version-string version))
    :layout :debian-base})
 
-(defn yum-packages-settings
+(defn packages-settings
   [version components]
   {:install-strategy :packages
-   :packages (kb/yum-packages
-              (version-string version)
-              (or components #{:server :libs}))})
-
-(defn apt-packages-settings
-  [version components]
-  {:install-strategy :packages
-   :packages (kb/apt-packages
+   :packages (kb/package-names
+              (os-family)
               (version-string version)
               components)})
 
@@ -126,11 +120,11 @@ Links:
 
 (defmethod-version-plan install-strategy {:os :rh-base}
   [os os-version version settings]
-  (yum-packages-settings version nil))
+  (packages-settings version nil))
 
 (defmethod-version-plan install-strategy {:os :debian-base}
   [os os-version version settings]
-  (apt-packages-settings version nil))
+  (packages-settings version nil))
 
 ;;; Default settings
 (def default-settings-map
@@ -142,7 +136,8 @@ Links:
              :shared_buffers "24MB"
              :log_line_prefix "%t "
              :datestyle "iso, ymd"
-             :default_text_search_config "pg_catalog.english"}
+             :default_text_search_config "pg_catalog.english"
+             :logging_collector "on"}
    :permissions [["local" "all" "postgres" "ident" ""]
                  ["local" "postgres" "postgres" "ident" ""]]
    :start {:start :auto}
@@ -275,7 +270,11 @@ Links:
      :content hba-contents
      :literal true
      :flag-on-changed postgresql-config-changed-flag
-     :owner (:owner settings))))
+     :owner (:owner settings))
+    (when-let [t (:selunix-file-t settings)]
+      (exec-checked-script
+       (str "SELinux chcon " conf-path " type " t)
+       (lib/selinux-file-type ~conf-path ~t)))))
 
 (defn default-cluster-name
   "Returns the default cluster name"
@@ -450,7 +449,50 @@ Links:
       (start-conf options)
       (install-service options))))
 
-; (declare service)
+(defn- port-config* [settings]
+  (when-let [t (:selunix-port-t settings)]
+    (let [p (-> settings :options :port)]
+      (exec-checked-script
+       (str "SELinux manage port " p " type " t)
+       (if (&& (lib/has-command? semanage)
+               (&& (directory? "/etc/selinux")
+                   (file-exists? "/selinux/enforce")))
+         (if (pipe ("semanage" port -l) ("fgrep" ~p))
+           ("semanage" port -m -t ~t -p tcp ~p)
+           ("semanage" port -a -t ~t -p tcp ~p)))))))
+
+(defn port-config
+  "Manage the SELinux port type of the configured port"
+  [{:keys [instance-id cluster] :as options}]
+  (let [settings (get-settings facility options)]
+    (if (:has-multicluster-service settings)
+      (doseq [cluster (keys (:clusters settings))
+              :let [cluster-name (name cluster)
+                    cluster-settings (settings-for-cluster
+                                      cluster-name options)]]
+        (port-config* cluster-settings))
+      (port-config* settings))))
+
+(defn dir-config*
+  [{:keys [owner selunix-file-t options] :as settings}]
+  (let [d (:unix_socket_directory options)]
+    (directory d :owner owner)
+    (when selunix-file-t
+      (exec-checked-script
+       (str "SELinux chcon " d " type " selunix-file-t)
+       (lib/selinux-file-type ~d ~selunix-file-t)))))
+
+(defn dir-config
+  "Ensure required directories exist"
+  [{:keys [instance-id cluster] :as options}]
+  (let [settings (get-settings facility options)]
+    (if (:has-multicluster-service settings)
+      (doseq [cluster (keys (:clusters settings))
+              :let [cluster-name (name cluster)
+                    cluster-settings (settings-for-cluster
+                                      cluster-name options)]]
+        (dir-config* settings))
+      (dir-config* settings))))
 
 (defn initdb
   "Initialise a cluster"
@@ -520,7 +562,8 @@ Links:
       ~(if (:has-pg-wrapper settings)
          ""
          (format
-          "env PGDATA=%s PGPORT=%s"
+          "env PGHOST=%s PGDATA=%s PGPORT=%s"
+          (-> cluster-settings :options :unix_socket_directory)
           (-> cluster-settings :options :data_directory)
           (-> cluster-settings :options :port)))
       psql
@@ -665,7 +708,9 @@ END$$;"
   (initdb options)
   (hba-conf options)
   (postgresql-conf options)
-  (service-config options))
+  (service-config options)
+  (port-config options)
+  (dir-config options))
 
 
 (defn server-spec
