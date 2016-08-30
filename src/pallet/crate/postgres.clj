@@ -621,7 +621,8 @@ END$$;"
    "create or replace function pg_temp.createuser() returns void as $$
  declare user_rec record;
  begin
- if user_rec.usename is null then
+ select into user_rec * from pg_roles where rolname='%1$s';
+ if user_rec.rolname is null then
      create role %1$s %2$s;
  end if;
  end;
